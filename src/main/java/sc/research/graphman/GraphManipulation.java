@@ -24,15 +24,11 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.util.FileManager;
 import org.openrdf.model.URI;
 import slib.graph.model.graph.G;
-import slib.graph.model.graph.elements.E;
-import slib.graph.model.graph.utils.Direction;
-import slib.graph.model.impl.graph.elements.Edge;
 import slib.graph.model.impl.graph.memory.GraphMemory;
 import slib.graph.model.impl.repo.URIFactoryMemory;
 import slib.graph.model.repo.URIFactory;
-import slib.sml.sm.core.engine.SM_Engine;
 import slib.utils.ex.SLIB_Ex_Critic;
-import slib.utils.ex.SLIB_Exception;
+
 
 /**
  *
@@ -53,7 +49,6 @@ public class GraphManipulation {
      
     Ingoing_resource = getIngoingResources("http://dbpedia.org/resource/Paris" , 1);
     
-//    addTriplesToDataset(Ingoing_resource ,  "C:\\Users\\LENOVO\\Documents\\NetBeansProjects\\GraphManipulation\\src\\Resources\\data.rdf");
     
     System.out.println("- Empty Graph");
     System.out.println(graph.toString());
