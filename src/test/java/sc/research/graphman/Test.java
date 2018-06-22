@@ -20,11 +20,19 @@ public class Test {
         GraphManipulation graphMan = new GraphManipulation();
         G graph;
         
+        Set<String> Ingoing_resources = new HashSet<String>(),
+                    Outgoing_resources = new HashSet<String>(),
+                    All_resources = new HashSet<String>();
         
-        Set<String> Ingoing_resource = new HashSet<String>();
-        Ingoing_resource = resources.getIngoingResources("http://dbpedia.org/resource/Paris", 1);
+        Ingoing_resources = resources.getIngoingResources("http://dbpedia.org/resource/Paris", 1);
+        Outgoing_resources = resources.getOutgoingResources("http://dbpedia.org/resource/Paris" , 1);
         
-        graph = graphMan.generateGraph(Ingoing_resource, "http://dbpedia.org/resource/");
+        All_resources.addAll(Ingoing_resources);
+        All_resources.addAll(Outgoing_resources);
+        
+        graph = graphMan.generateGraph(All_resources, "http://dbpedia.org/resource/");
+
+        
         
        
     }

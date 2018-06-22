@@ -54,10 +54,10 @@ public class LdResources {
                          subject = (RDFNode)soln.get("subject");
                          property = (RDFNode)soln.get("property");
                           
-                         Ingoing_resource.add(soln.toString() + "( ?object = <" + r + "> )");
+                         Ingoing_resource.add("( ?subject = <" + subject + "> ) ( ?property = <" + property + "> ) ( ?object = <" + r + "> )");
                          
                          
-                         if(level >= 0){
+                         if(level > 0){
                             
                             Ingoing_resource.addAll(getIngoingResources(subject.toString() , level));
                            
@@ -77,15 +77,14 @@ public class LdResources {
      
        public Set<String> getOutgoingResources(String r , Integer level){
          Set<String> Outgoing_resource = new HashSet();
-         RDFNode subject = null;
+         RDFNode object = null;
          RDFNode property = null;
          
-         String queryString = "select distinct ?object ?property\n" +
+         String queryString = "select distinct ?property ?object\n" +
                               "where \n" +
                               "{<" + r + "> ?property ?object.\n" +
                               "FILTER(ISURI(?object))} \n"+
                               "LIMIT 1";
-
 
                 Query query = QueryFactory.create(queryString);
 
@@ -98,15 +97,14 @@ public class LdResources {
 
                          QuerySolution soln = results.nextSolution() ;
                          
-                         subject = (RDFNode)soln.get("object");
+                         object = (RDFNode)soln.get("object");
                          property = (RDFNode)soln.get("property");
                           
-                         Outgoing_resource.add("( ?subject = <" + r + "> )" + soln.toString() + "level: " + level);
+                         Outgoing_resource.add("( ?subject = <" + r + "> ) ( ?property = <" + property + "> ) ( ?object = <" + object + "> )");
                          
-                         
-                         if(level >= 0){
+                         if(level > 0){
                             
-                            Outgoing_resource.addAll(getOutgoingResources(subject.toString() , level));
+                            Outgoing_resource.addAll(getOutgoingResources(object.toString() , level));
                            
                          }
                     
