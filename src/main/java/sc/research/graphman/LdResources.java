@@ -5,33 +5,31 @@
  */
 package sc.research.graphman;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.util.FileManager;
+import org.openrdf.model.URI;
+import slib.graph.model.graph.G;
+import slib.graph.model.repo.URIFactory;
+import slib.graph.model.impl.repo.URIFactoryMemory;
 
 /**
  *
  * @author LENOVO
  */
 public class LdResources {
-       public Set<String> getIngoingResources(String r , Integer level){
-         Set<String> Ingoing_resource = new HashSet();
+       public void addIngoingResources(G graph , String r , Integer level){
+        
          RDFNode subject = null;
          RDFNode property = null;
+         
+         URI vSubject , vObject , eProperty;
+         
+         URIFactory factory = URIFactoryMemory.getSingleton();
          
          String queryString = "select distinct ?subject ?property \n" +
                               "where \n" +
@@ -49,17 +47,25 @@ public class LdResources {
                     ResultSet results = qexec.execSelect();
                     for (; results.hasNext();) {
 
-                         QuerySolution soln = results.nextSolution() ;
+                        QuerySolution soln = results.nextSolution() ;
                          
-                         subject = (RDFNode)soln.get("subject");
-                         property = (RDFNode)soln.get("property");
+                        subject = (RDFNode)soln.get("subject");
+                        property = (RDFNode)soln.get("property");
+                         
+                        vSubject = factory.getURI(subject.toString());
+                        eProperty = factory.getURI(property.toString());
+                        vObject = factory.getURI(r);
                           
-                         Ingoing_resource.add("( ?subject = <" + subject + "> ) ( ?property = <" + property + "> ) ( ?object = <" + r + "> )");
-                         
-                         
-                         if(level > 0){
+                        graph.addV(vSubject);
+                        System.out.println("vertex " + vSubject + " added");
+                        graph.addV(vObject);
+                        System.out.println("vertex " + vObject + " added");
+                        graph.addE(vSubject, eProperty ,vObject);
+                        System.out.println("edge " + eProperty + " added");
+                          
+                        if(level > 0){
                             
-                            Ingoing_resource.addAll(getIngoingResources(subject.toString() , level));
+                            addIngoingResources(graph , subject.toString() , level);
                            
                          }
                     
@@ -72,13 +78,16 @@ public class LdResources {
                    qexec.close();
                 }
          
-        return Ingoing_resource;
-     }
+      
+        }
      
-       public Set<String> getOutgoingResources(String r , Integer level){
-         Set<String> Outgoing_resource = new HashSet();
+       public void addOutgoingResources(G graph ,String r , Integer level){
+
          RDFNode object = null;
          RDFNode property = null;
+         URI vSubject , vObject , eProperty;
+         
+         URIFactory factory = URIFactoryMemory.getSingleton();
          
          String queryString = "select distinct ?property ?object\n" +
                               "where \n" +
@@ -95,18 +104,27 @@ public class LdResources {
                     ResultSet results = qexec.execSelect();
                     for (; results.hasNext();) {
 
-                         QuerySolution soln = results.nextSolution() ;
+                        QuerySolution soln = results.nextSolution() ;
                          
-                         object = (RDFNode)soln.get("object");
-                         property = (RDFNode)soln.get("property");
+                        object = (RDFNode)soln.get("object");
+                        property = (RDFNode)soln.get("property");
+                         
+                        vSubject = factory.getURI(r);
+                        eProperty = factory.getURI(property.toString());
+                        vObject = factory.getURI(object.toString());
                           
-                         Outgoing_resource.add("( ?subject = <" + r + "> ) ( ?property = <" + property + "> ) ( ?object = <" + object + "> )");
+                        graph.addV(vSubject);
+                        System.out.println("vertex " + vSubject + " added");
+                        graph.addV(vObject);
+                        System.out.println("vertex " + vObject + " added");
+                        graph.addE(vSubject, eProperty ,vObject);
+                        System.out.println("edge " + eProperty + " added");
                          
-                         if(level > 0){
+                        if(level > 0){
                             
-                            Outgoing_resource.addAll(getOutgoingResources(object.toString() , level));
+                            addOutgoingResources(graph , object.toString() , level);
                            
-                         }
+                        }
                     
                     }
                     
@@ -116,61 +134,5 @@ public class LdResources {
                 finally {
                    qexec.close();
                 }
-         
-        return Outgoing_resource;
-     }
-       
-      public void addTriplesToDataset(Set<String> triples ,  String dirctory){
-                
-                String subject,
-                       property,
-                       object,
-                       triple;
-                
-                Model model = ModelFactory.createDefaultModel();
-                File file = new File(dirctory);
-                if(file.exists()){
-                    
-                   InputStream in = FileManager.get().open(dirctory);
-                   model.read(in, "");
-                    
-                    
-                }
-                
-                Iterator iter = triples.iterator();
-                while (iter.hasNext()) {
-                    triple = iter.next().toString();
-                    
-                    subject = getSubject(triple);
-                    property = getProperty(triple);
-                    object = getObject(triple);
-                    
-                    Resource rcs = model.getResource(subject);
-                    rcs.addProperty(model.getProperty(property), object);
-            
-                }
-
-                try{
-                  FileOutputStream fout=new FileOutputStream(dirctory);
-                  model.write(fout , "RDF/XML");
-                  }
-
-                  catch (Exception e)
-                  {
-                        System.out.println("Failed: " + e);
-                  }
         }
-      
-      public static String getSubject(String triple){
-          return triple.substring(triple.indexOf("?subject", 0) + 11 , triple.indexOf("?property", 0)-5).replace("<", "").replace(">", "");
-      }
-      
-      public static String getProperty(String triple){
-          return triple.substring(triple.indexOf("?property", 0) + 12 , triple.indexOf("?object", 0)-4).replace("<", "").replace(">", "");
-      }
-      
-      public static String getObject(String triple){
-          return triple.substring(triple.indexOf("?object", 0) + 10 , triple.length() - 2).replace("<", "").replace(">", "");
-      }
-    
-}
+    }
