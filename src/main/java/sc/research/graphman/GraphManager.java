@@ -19,7 +19,7 @@ import slib.graph.model.repo.URIFactory;
  *
  * @author LENOVO
  */
-public class GraphManipulation {
+public class GraphManager {
     
     public G generateGraph(String GraphURI) throws SLIB_Ex_Critic {
 

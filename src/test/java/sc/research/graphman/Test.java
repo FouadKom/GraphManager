@@ -23,46 +23,46 @@ public class Test {
     public static void main(String[] args) throws SLIB_Ex_Critic {
         
         LdResources resources = new LdResources();
-        GraphManipulation graphMan = new GraphManipulation();
+        GraphManager graphMan = new GraphManager();
         
         G graph = graphMan.generateGraph("http://dbpedia.org/resource/");
-        
+//        
         System.out.println("-------------------------ADDING OUTGOING RESOURCES WITH LEVEL 1-----------------------------------------");
         
-        resources.addOutgoingResources(graph , "http://dbpedia.org/resource/Paris", 1);
+        resources.addOutgoingResources(graph , "http://dbpedia.org/resource/Paris", 3);
         graphMan.showVerticesAndEdges(graph);
+//        
+//        System.out.println("-------------------------ADDING OUTGOING RESOURCES WITH LEVEL 2-----------------------------------------");
+//        
+//        resources.addOutgoingResources(graph , "http://dbpedia.org/resource/Paris", 2);
+//        graphMan.showVerticesAndEdges(graph);
+//        
+//        System.out.println("-------------------------ADDING INGOING RESOURCES WITH LEVEL 1-----------------------------------------");
+//        
+//        resources.addIngoingResources(graph , "http://dbpedia.org/resource/Paris", 1);
+//        graphMan.showVerticesAndEdges(graph);
+//        
+//        System.out.println("-------------------------ADDING INGOING RESOURCES WITH LEVEL 2-----------------------------------------");
         
-        System.out.println("-------------------------ADDING OUTGOING RESOURCES WITH LEVEL 2-----------------------------------------");
-        
-        resources.addOutgoingResources(graph , "http://dbpedia.org/resource/Paris", 2);
-        graphMan.showVerticesAndEdges(graph);
-        
-        System.out.println("-------------------------ADDING INGOING RESOURCES WITH LEVEL 1-----------------------------------------");
-        
-        resources.addIngoingResources(graph , "http://dbpedia.org/resource/Paris", 1);
-        graphMan.showVerticesAndEdges(graph);
-        
-        System.out.println("-------------------------ADDING INGOING RESOURCES WITH LEVEL 2-----------------------------------------");
-        
-        resources.addIngoingResources(graph , "http://dbpedia.org/resource/Paris", 2);
+        resources.addIngoingResources(graph , "http://dbpedia.org/resource/Paris", 3);
         graphMan.showVerticesAndEdges(graph);
        
-        System.out.println("------------------------------------------------------------------");
-        
-        System.out.println("Ingoing edges for \"http://dbpedia.org/resource/Paris\"");
-        Set<E> IngoingEdges = graphMan.getIngouingEdges(graph, "http://dbpedia.org/resource/Paris");
-        System.out.println(IngoingEdges);
-        
-        System.out.println("------------------------------------------------------------------");
-        
-        System.out.println("Outgoing edges for \"http://dbpedia.org/resource/Paris\"");
-        Set<E> outgoingEdges = graphMan.getOutgouingEdges(graph, "http://dbpedia.org/resource/Paris");
-        System.out.println(outgoingEdges);
-        
-        System.out.println("------------------------------------------------------------------");
-        
-        graphMan.removeVertex(graph , "http://dbpedia.org/resource/Paris");
-        graphMan.showVerticesAndEdges(graph);
+//        System.out.println("------------------------------------------------------------------");
+//        
+//        System.out.println("Ingoing edges for \"http://dbpedia.org/resource/Paris\"");
+//        Set<E> IngoingEdges = graphMan.getIngouingEdges(graph, "http://dbpedia.org/resource/Paris");
+//        System.out.println(IngoingEdges);
+//        
+//        System.out.println("------------------------------------------------------------------");
+//        
+//        System.out.println("Outgoing edges for \"http://dbpedia.org/resource/Paris\"");
+//        Set<E> outgoingEdges = graphMan.getOutgouingEdges(graph, "http://dbpedia.org/resource/Paris");
+//        System.out.println(outgoingEdges);
+//        
+//        System.out.println("------------------------------------------------------------------");
+//        
+//        graphMan.removeVertex(graph , "http://dbpedia.org/resource/Paris");
+//        graphMan.showVerticesAndEdges(graph);
         
         
         

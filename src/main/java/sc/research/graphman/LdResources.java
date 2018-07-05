@@ -5,6 +5,8 @@
  */
 package sc.research.graphman;
 
+import java.util.HashSet;
+import java.util.Set;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
@@ -23,6 +25,8 @@ import slib.graph.model.impl.repo.URIFactoryMemory;
  */
 public class LdResources {
        public void addIngoingResources(G graph , String r , Integer level){
+           
+         Set<String> trvrsdResources = new HashSet<String>();
         
          RDFNode subject = null;
          RDFNode property = null;
@@ -62,8 +66,10 @@ public class LdResources {
                         System.out.println("vertex " + vObject + " added");
                         graph.addE(vSubject, eProperty ,vObject);
                         System.out.println("edge " + eProperty + " added");
+                        
+                        trvrsdResources.add(subject.toString());
                           
-                        if(level > 0){
+                        if(level > 0 && !trvrsdResources.contains(subject.toString())){
                             
                             addIngoingResources(graph , subject.toString() , level);
                            
@@ -82,6 +88,8 @@ public class LdResources {
         }
      
        public void addOutgoingResources(G graph ,String r , Integer level){
+           
+         Set<String> trvrsdResources = new HashSet<String>();
 
          RDFNode object = null;
          RDFNode property = null;
@@ -120,7 +128,7 @@ public class LdResources {
                         graph.addE(vSubject, eProperty ,vObject);
                         System.out.println("edge " + eProperty + " added");
                          
-                        if(level > 0){
+                        if(level > 0 && !trvrsdResources.contains(object.toString())){
                             
                             addOutgoingResources(graph , object.toString() , level);
                            
