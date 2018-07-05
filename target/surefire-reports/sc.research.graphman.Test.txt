@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: sc.research.graphman.Test
 -------------------------------------------------------------------------------
-Tests run: 0, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.041 sec
+Tests run: 0, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.042 sec
