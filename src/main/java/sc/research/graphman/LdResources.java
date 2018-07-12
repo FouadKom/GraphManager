@@ -5,6 +5,7 @@
  */
 package sc.research.graphman;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import org.apache.jena.query.Dataset;
@@ -24,280 +25,397 @@ import slib.graph.model.impl.repo.URIFactoryMemory;
  *
  * @author LENOVO
  */
+
+
 public class LdResources {
     private static Set<String> trvrsdResources = new HashSet<String>();
-
+    private static ArrayList<String> connectingPath = new ArrayList();
+ 
     
-       public void addIngoingResources(G graph , String r , Integer level){
+    public void addIngoingResources(G graph , String r , Integer level){
            
-         RDFNode subject = null;
-         RDFNode property = null;
+        RDFNode subject = null;
+        RDFNode property = null;
          
-         URI vSubject , vObject , eProperty;
+        URI vSubject , vObject , eProperty;
          
-         URIFactory factory = URIFactoryMemory.getSingleton();
+        URIFactory factory = URIFactoryMemory.getSingleton();
          
-         String queryString = "select distinct ?subject ?property \n" +
+        String queryString = "select distinct ?subject ?property \n" +
                               "where \n" +
                               "{?subject ?property <" + r + ">.\n" +
-                              "FILTER(ISURI(?subject))} \n" +
-                              "LIMIT 1";
+                              "FILTER(ISURI(?subject))}";
 
 
-                Query query = QueryFactory.create(queryString);
+        Query query = QueryFactory.create(queryString);
 
-                QueryExecution qexec = QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql", query);
-                
-                level = level - 1;
-                trvrsdResources.add(r); 
-                
-                try {                                                                                                                                                                                                                                       
-                    ResultSet results = qexec.execSelect();
-                    for (; results.hasNext();) {
+        QueryExecution qexec = QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql", query);
 
-                        QuerySolution soln = results.nextSolution() ;
-                         
-                        subject = (RDFNode)soln.get("subject");
-                        property = (RDFNode)soln.get("property");
-                         
-                        vSubject = factory.getURI(subject.toString());
-                        eProperty = factory.getURI(property.toString());
-                        vObject = factory.getURI(r);
-                          
-                        graph.addV(vSubject);
-                        System.out.println("vertex " + vSubject + " added");
-                        graph.addV(vObject);
-                        System.out.println("vertex " + vObject + " added");
-                        graph.addE(vSubject, eProperty ,vObject);
-                        System.out.println("edge " + eProperty + " added");
-                        
-                        System.out.println("---------");
-                        
-                         if(trvrsdResources.contains(subject.toString())){
-                            System.out.println("Resource: " + subject.toString() + " not traversed since it already exists");
-                            continue;
-                        }
-                         
-                          
-                        if(level > 0){
-                            
-                            addIngoingResources(graph , subject.toString() , level);
-                           
-                         }
-                    
-                    }
-                    
-                    
-                }   
+        //querying resource r and traversing its subject so level is decremented 
+        level = level - 1;
 
-                finally {
-                   trvrsdResources.clear(); 
-                   qexec.close();
+        //adding the resource r to trvrsdResources list so it will not be traversed again 
+        trvrsdResources.add(r);
+        System.out.println("traversed " + r + " and added to list");
+
+        try {                                                                                                                                                                                                                                       
+            ResultSet results = qexec.execSelect();
+            for (; results.hasNext();) {
+
+                QuerySolution soln = results.nextSolution() ;
+
+                subject = (RDFNode)soln.get("subject");
+                property = (RDFNode)soln.get("property");
+
+                //vertex subject
+                vSubject = factory.getURI(subject.toString());
+                //edge property
+                eProperty = factory.getURI(property.toString());
+                //vertex object
+                vObject = factory.getURI(r);
+
+                //add vertex subject to the graph
+                graph.addV(vSubject);
+                System.out.println("vertex " + vSubject + " added");
+                //add edge property to the graph
+                graph.addE(vSubject, eProperty ,vObject);
+                System.out.println("edge " + eProperty + " added");
+                //add vertex object to the graph
+                graph.addV(vObject);
+                System.out.println("vertex " + vObject + " added");
+
+                System.out.println("---------");
+
+                //if subject of resource r is traversed previously continue the loop without traversing it
+                 if(trvrsdResources.contains(subject.toString())){ 
+                    System.out.println("Resource: " + subject.toString() + " not traversed since it already exists");
+                    continue;
                 }
-         
-      
-        }
-     
-       public void addOutgoingResources(G graph ,String r , Integer level){
 
-         RDFNode object = null;
-         RDFNode property = null;
-         URI vSubject , vObject , eProperty;
+                //check traversed level: if level > 0 then given level in parameters has not been reached 
+                if(level > 0){
+                    //if subjects of resource r are not previously traversed and level has not reached 0 recursivly traverse them
+                    //traversing subjects of r since the method gets ingoing resources
+                    addIngoingResources(graph , subject.toString() , level); 
+                }
+            }
+        }   
+
+        finally {
+           qexec.close();
+        }
+    }
+     
+    public void addOutgoingResources(G graph ,String r , Integer level){
+
+        RDFNode object = null;
+        RDFNode property = null;
+        URI vSubject , vObject , eProperty;
          
-         URIFactory factory = URIFactoryMemory.getSingleton();
+        URIFactory factory = URIFactoryMemory.getSingleton();
          
-         String queryString = "select distinct ?property ?object\n" +
+        String queryString = "select distinct ?property ?object\n" +
                               "where \n" +
                               "{<" + r + "> ?property ?object.\n" +
-                              "FILTER(ISURI(?object))} \n"+
-                              "LIMIT 1";
+                              "FILTER(ISURI(?object))}";
 
-                Query query = QueryFactory.create(queryString);
+        Query query = QueryFactory.create(queryString);
 
-                QueryExecution qexec = QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql", query);
-                
-                level = level - 1; 
-                trvrsdResources.add(r); 
-                try {                                                                                                                                                                                                                                       
-                    ResultSet results = qexec.execSelect();
-                    for (; results.hasNext();) {
+        QueryExecution qexec = QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql", query);
 
-                        QuerySolution soln = results.nextSolution() ;
-                         
-                        object = (RDFNode)soln.get("object");
-                        property = (RDFNode)soln.get("property");
-                         
-                        vSubject = factory.getURI(r);
-                        eProperty = factory.getURI(property.toString());
-                        vObject = factory.getURI(object.toString());
-                          
-                        graph.addV(vSubject);
-                        System.out.println("vertex " + vSubject + " added");
-                        graph.addV(vObject);
-                        System.out.println("vertex " + vObject + " added");
-                        graph.addE(vSubject, eProperty ,vObject);
-                        System.out.println("edge " + eProperty + " added");
-                        
-                        System.out.println("---------");
-                        
-                        if(trvrsdResources.contains(object.toString())){
-                            System.out.println("Resource: " + object.toString() + " not traversed since it already exists");
-                            continue;
-                        }
-                        
-                        if(level > 0){
-                            
-                            addOutgoingResources(graph , object.toString() , level);
-                           
-                        }
-                    
-                    }
-                    
-                    
-                }   
+        //querying resource r and traversing its objects so level is decremented 
+        level = level - 1; 
 
-                finally {
-                   trvrsdResources.clear();
-                   qexec.close();
+        //adding the resource r to trvrsdResources list so it will not be traversed again 
+        trvrsdResources.add(r);
+        System.out.println("traversed " + r + " and added to list");
+
+        try {                                                                                                                                                                                                                                       
+            ResultSet results = qexec.execSelect();
+            for (; results.hasNext();) {
+
+                QuerySolution soln = results.nextSolution() ;
+
+                object = (RDFNode)soln.get("object");
+                property = (RDFNode)soln.get("property");
+
+                //vertex subvject
+                vSubject = factory.getURI(r);
+                //edge property
+                eProperty = factory.getURI(property.toString());
+                //vertex object
+                vObject = factory.getURI(object.toString());
+
+                //add vertex subject to the graph
+                graph.addV(vSubject);
+                System.out.println("vertex " + vSubject + " added");
+                //add edge property to the graph
+                graph.addE(vSubject, eProperty ,vObject);
+                System.out.println("edge " + eProperty + " added");
+                //add vertex object to the graph
+                graph.addV(vObject);
+                System.out.println("vertex " + vObject + " added");
+
+                System.out.println("---------");
+
+                //if object of resource r is traversed previously continue the loop without traversing it
+                if(trvrsdResources.contains(object.toString())){
+                    System.out.println("Resource: " + object.toString() + " not traversed since it already exists");
+                    continue;
                 }
-        }
-       
-       
-        public static void addIngoingResourcesFromDataset(G graph , String r , Integer level , Dataset dataset){
-           
-         RDFNode subject = null;
-         RDFNode property = null;
-         
-         URI vSubject , vObject , eProperty;
-         
-         URIFactory factory = URIFactoryMemory.getSingleton();
-         
-           String queryString = "select distinct ?subject ?property \n" +
-                                "where \n" +
-                                "{?subject ?property <" + r + ">.\n" +
-                                "FILTER(ISURI(?subject)) }";
-            
-           Query query = QueryFactory.create(queryString) ;
-           QueryExecution queryexec = QueryExecutionFactory.create(query, dataset) ;
-            
-           level = level - 1; 
-           trvrsdResources.add(r); 
-           
-                try {                                                                                                                                                                                                                                       
-                    ResultSet results = queryexec.execSelect();
-                    for (; results.hasNext();) {
 
-                        QuerySolution soln = results.nextSolution() ;
-                         
-                        subject = (RDFNode)soln.get("subject");
-                        property = (RDFNode)soln.get("property");
-                        
-                        vSubject = factory.getURI(subject.toString());
-                        eProperty = factory.getURI(property.toString());
-                        vObject = factory.getURI(r);
-                       
-                        graph.addV(vSubject);
-                        System.out.println("vertex " + vSubject + " added");
-                        graph.addE(vSubject, eProperty ,vObject);
-                        System.out.println("edge " + eProperty + " added");
-                        graph.addV(vObject);
-                        System.out.println("vertex " + vObject + " added");
-                        
-                        System.out.println("---------");
-                        
-                         if(trvrsdResources.contains(subject.toString())){
-                            System.out.println("Resource: " + subject.toString() + " not traversed since it already exists");
-                            continue;
-                        }
-                        
-                        if(level > 0){
-                          
-                          addIngoingResourcesFromDataset(graph , subject.toString() , level , dataset);
-                           
-                         }
-                        
-                    }
-                    
-                    
-                } 
-                
-            finally{
-                trvrsdResources.clear();
-                queryexec.close();
-                
-                
+                //check traversed level: if level > 0 then given level in parameters has not been reached 
+                if(level > 0){
+                    //if objects of resource r are not previously traversed and level has not reached 0 recursivly traverse them
+                    //traversing object of r since the method gets outgoing resources
+                    addOutgoingResources(graph , object.toString() , level);
+                }
             }
-      
-        }
-     
-       public static void addOutgoingResourcesFromDataset(G graph ,String r , Integer level , Dataset dataset){
-          
+        }   
 
-         RDFNode object = null;
-         RDFNode property = null;
-     
-         URI vSubject , vObject , eProperty;
+        finally {
+           qexec.close();
+        }
+    }
+       
+       
+    public void addIngoingResources(G graph , String r , Integer level , Dataset dataset){
          
-         URIFactory factory = URIFactoryMemory.getSingleton();
+       RDFNode subject = null;
+       RDFNode property = null;
+         
+       URI vSubject , vObject , eProperty;
+         
+       URIFactory factory = URIFactoryMemory.getSingleton();
+         
+       String queryString = "select distinct ?subject ?property \n" +
+                            "where \n" +
+                            "{?subject ?property <" + r + ">.\n" +
+                            "FILTER(ISURI(?subject)) }";
+
+       Query query = QueryFactory.create(queryString) ;
+       QueryExecution queryexec = QueryExecutionFactory.create(query, dataset) ;
+
+       //querying resource r and traversing its subject so level is decremented 
+       level = level - 1;
+
+       //adding the resource r to trvrsdResources list so it will not be traversed again 
+       trvrsdResources.add(r);
+       System.out.println("traversed " + r + " and added to list");
+
+       try {                                                                                                                                                                                                                                       
+            ResultSet results = queryexec.execSelect();
+            for (; results.hasNext();) {
+                
+                QuerySolution soln = results.nextSolution() ;
+
+                subject = (RDFNode)soln.get("subject");
+                property = (RDFNode)soln.get("property");
+
+                //vertex subject
+                vSubject = factory.getURI(subject.toString());
+                //edge property
+                eProperty = factory.getURI(property.toString());
+                //vertex object
+                vObject = factory.getURI(r);
+
+                //add vertex subject to the graph
+                graph.addV(vSubject);
+                System.out.println("vertex " + vSubject + " added");
+                //add edge property to the graph
+                graph.addE(vSubject, eProperty ,vObject);
+                System.out.println("edge " + eProperty + " added");
+                //add vertex object to the graph
+                graph.addV(vObject);
+                System.out.println("vertex " + vObject + " added");
+
+                System.out.println("---------");
+
+                //if subject of resource r is traversed previously continue the loop without traversing it
+                 if(trvrsdResources.contains(subject.toString())){ 
+                    System.out.println("Resource: " + subject.toString() + " not traversed since it already exists");
+                    continue;
+                }
+
+                if(level > 0){
+                  //if subjects of resource r are not previously traversed and level has not reached 0 recursivly traverse them
+                  //traversing subjects of r since the method gets ingoing resources
+                  addIngoingResources(graph , subject.toString() , level , dataset);
+
+                }
+            }
+        } 
+
+        finally{             
+            queryexec.close();
+        }
+    }
+     
+    public void addOutgoingResources(G graph ,String r , Integer level , Dataset dataset){
+          
+        RDFNode object = null;
+        RDFNode property = null;
+     
+        URI vSubject , vObject , eProperty;
+         
+        URIFactory factory = URIFactoryMemory.getSingleton();
              
         String queryString = "select distinct ?property ?object\n" +
                               "where \n" +
                               "{<" + r + "> ?property ?object.\n" +
                               "FILTER(ISURI(?object))}";
 
-            Query query = QueryFactory.create(queryString) ;
-            QueryExecution queryexec = QueryExecutionFactory.create(query, dataset) ;
-                
-              
-                level = level - 1; 
-                trvrsdResources.add(r); 
-                try {                                                                                                                                                                                                                                       
-                    ResultSet results = queryexec.execSelect();
-                    for (; results.hasNext();) {
+        Query query = QueryFactory.create(queryString) ;
+        QueryExecution queryexec = QueryExecutionFactory.create(query, dataset) ;
 
-                        QuerySolution soln = results.nextSolution() ;
-                        
-                        
-                        object = (RDFNode)soln.get("object");
-                        property = (RDFNode)soln.get("property");
-                        
-                        vSubject = factory.getURI(r);
-                        eProperty = factory.getURI(property.toString());
-                        vObject = factory.getURI(object.toString());
-                          
-                        graph.addV(vSubject);
-                        System.out.println("vertex " + vSubject + " added");
-                        graph.addE(vSubject, eProperty ,vObject);
-                        System.out.println("edge " + eProperty + " added");
-                        graph.addV(vObject);
-                        System.out.println("vertex " + vObject + " added");
-                        
-                        System.out.println("---------");
-                        
-                        
-                        if(trvrsdResources.contains(object.toString())){
-                            System.out.println("Resource: " + object.toString() + " not traversed since it already exists");
-                            continue;
-                        }
-                        
-                        if(level > 0){
-                            
-                            
-                            addOutgoingResourcesFromDataset(graph , object.toString() , level , dataset);
-                           
-                        }
-                            
-                    }
-                    
-                    
-                    
-                }   
 
-                finally{
-                    trvrsdResources.clear();
-                    queryexec.close();
-              
-                
+        //querying resource r and traversing its objects so level is decremented 
+        level = level - 1; 
+
+        //adding the resource r to trvrsdResources list so it will not be traversed again 
+        trvrsdResources.add(r);
+        System.out.println("traversed " + r + " and added to list");
+
+        try {                                                                                                                                                                                                                                       
+            ResultSet results = queryexec.execSelect();
+            for (; results.hasNext();) {
+
+                QuerySolution soln = results.nextSolution() ;
+
+                object = (RDFNode)soln.get("object");
+                property = (RDFNode)soln.get("property");
+
+                //vertex subvject
+                vSubject = factory.getURI(r);
+                //edge property
+                eProperty = factory.getURI(property.toString());
+                //vertex object
+                vObject = factory.getURI(object.toString());
+
+                //add vertex subject to the graph
+                graph.addV(vSubject);
+                System.out.println("vertex " + vSubject + " added");
+                //add edge property to the graph
+                graph.addE(vSubject, eProperty ,vObject);
+                System.out.println("edge " + eProperty + " added");
+                //add vertex object to the graph
+                graph.addV(vObject);
+                System.out.println("vertex " + vObject + " added");
+
+                System.out.println("---------");
+
+                //if object of resource r is traversed previously continue the loop without traversing it
+                if(trvrsdResources.contains(object.toString())){
+                    System.out.println("Resource: " + object.toString() + " not traversed since it already exists");
+                    continue;
+                }
+
+                //check traversed level: if level > 0 then given level in parameters has not been reached 
+                if(level > 0){
+                    //if objects of resource r are not previously traversed and level has not reached 0 recursivly traverse them
+                    //traversing object of r since the method gets outgoing resources
+                    addOutgoingResources(graph , object.toString() , level , dataset);
+                }
             }
+        }   
+
+        finally{              
+            queryexec.close();
         }
+           
     }
+       
+    public void getConnectingPath(G graph , String r1 , String r2 , int level , Dataset dataset){
+           
+        RDFNode object = null;
+        RDFNode property = null;
+
+        URI vSubject , vObject , eProperty;
+
+        URIFactory factory = URIFactoryMemory.getSingleton();
+
+        String queryString = "select distinct ?property ?object\n" +
+                             "where \n" +
+                             "{<" + r1 + "> ?property ?object.\n" +
+                             "FILTER(ISURI(?object))}";
+
+        Query query = QueryFactory.create(queryString) ;
+        QueryExecution queryexec = QueryExecutionFactory.create(query, dataset) ;
+
+
+        //querying resource r1 and traversing its objects so level is decremented 
+        level = level - 1; 
+
+        //adding the resource r1 to trvrsdResources list so it will not be traversed again 
+        trvrsdResources.add(r1);
+        System.out.println("traversed " + r1 + " and added to list");
+
+        try {                                                                                                                                                                                                                                       
+            ResultSet results = queryexec.execSelect();
+
+            for (; results.hasNext() ;) {
+
+                QuerySolution soln = results.nextSolution() ;
+
+                object = (RDFNode)soln.get("object");
+                property = (RDFNode)soln.get("property");
+
+                //vertex subvject
+                vSubject = factory.getURI(r1);
+                //edge property
+                eProperty = factory.getURI(property.toString());
+                //vertex object
+                vObject = factory.getURI(object.toString());
+
+                //add vertex subject to the graph
+                graph.addV(vSubject);
+                System.out.println("vertex " + vSubject + " added");
+                //add edge property to the graph
+                graph.addE(vSubject, eProperty ,vObject);
+                System.out.println("edge " + eProperty + " added");
+                //add vertex object to the graph
+                graph.addV(vObject);
+                System.out.println("vertex " + vObject + " added");
+
+                System.out.println("---------");
+
+               //if resource r2 is reached stop querying
+                if(object.toString().equalsIgnoreCase(r2)){
+                    System.out.println("Resource " + r2 +" found, method stopped");
+                    return;
+                }
+
+                //if object of resource r1 is traversed previously continue the loop without traversing it
+                if(trvrsdResources.contains(object.toString())){
+                    System.out.println("Resource: " + object.toString() + " not traversed since it already exists");
+                    continue;
+                }
+
+               //check traversed level: if level > 0 then given level in parameters has not been reached 
+               if(level > 0)
+                   /*if objects of resource r are not previously traversed 
+                    and level has not reached 0 
+                    and resource r2 has not been found, 
+                   recursivly traverse objects of r1 to search for r2*/
+                    getConnectingPath(graph , object.toString() , r2 , level, dataset);
+                }
+
+        }
+
+        finally{             
+          queryexec.close();
+        }
+            
+    }
+      
+    /*This method is declared to clear the share variable trvrsdResources
+    this variable is used to hold traversed resources during recursion and 
+    because of rescursion it should be cleared outside the methods
+    */
+    
+  public void clear(){
+       this.trvrsdResources.clear();
+   }
+      
+      
+}

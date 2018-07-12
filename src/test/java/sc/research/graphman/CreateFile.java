@@ -20,7 +20,7 @@ import org.apache.jena.rdf.model.Statement;
  * @author LENOVO
  */
 public class CreateFile {
-     private String directory;
+    private String directory;
     
     public CreateFile(String directory) throws IOException{
         this.directory = directory;
@@ -61,15 +61,15 @@ public class CreateFile {
         addStatement(ns+"Bear", ns+"has", ns+"Fur", model);
         addStatement(ns+"Bear", ns+"eates", ns+"Cat", model);
         
-         try{
-                  FileOutputStream fout=new FileOutputStream(this.directory);
-                  model.write(fout , "RDF/XML");
-                  }
+        try{
+            FileOutputStream fout=new FileOutputStream(this.directory);
+            model.write(fout , "RDF/XML");
+        }
 
-                  catch (Exception e)
-                  {
-                        System.out.println("Failed: " + e);
-                  }
+        catch (Exception e)
+        {
+           System.out.println("Failed: " + e);
+        }
 
     }
     

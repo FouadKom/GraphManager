@@ -99,9 +99,4 @@ public class GraphManager {
         System.out.println("Vertex \"" + vertexURI +"\" removed with all its associated edges");
     }
     
-    
-    
-
- 
-    
 }
